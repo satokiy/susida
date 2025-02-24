@@ -1,6 +1,5 @@
 # susida
-
-To install dependencies:
+寿司打をします。
 
 ```bash
 bun install

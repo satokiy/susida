@@ -1,7 +1,7 @@
 import { chromium } from "playwright";
 import { createWorker } from "tesseract.js";
-import { createCanvas, loadImage } from "canvas"
-import fs from "fs"
+import { createCanvas, loadImage } from "canvas";
+import fs from "fs";
 
 const filePath = (fileName: string) => `screenshots/${fileName}`;
 
@@ -44,9 +44,9 @@ const startY = 255;
 await canvasEl.click({
 	position: {
 		x: startX,
-		y: startY
-	}
-})
+		y: startY,
+	},
+});
 
 await page.waitForTimeout(2000);
 
@@ -54,12 +54,12 @@ await page.waitForTimeout(2000);
 await canvasEl.click({
 	position: {
 		x: 165,
-		y: 330
-	}
-})
+		y: 330,
+	},
+});
 
 await page.waitForTimeout(1000);
-await page.keyboard.press("Enter")
+await page.keyboard.press("Enter");
 await page.waitForTimeout(3000);
 
 const worker = await createWorker("eng");
@@ -71,48 +71,61 @@ setInterval(async () => {
 	if (count >= MAX_COUNT) {
 		return;
 	}
-	const fileName = filePath('screenshot.png');
+	const fileName = filePath("screenshot.png");
 	await canvasEl.screenshot({ path: fileName });
-	
+
 	// 文字を認識するエリア
 	const region = {
 		x: 60,
 		y: 200,
 		width: 400,
 		height: 100,
-	}
-	
-	const image = await loadImage(fileName)
+	};
+
+	const image = await loadImage(fileName);
 	const canvas = createCanvas(region.width, region.height);
-	const ctx = canvas.getContext('2d');
-	ctx.drawImage(image, region.x, region.y, region.width, region.height, 0, 0, region.width, region.height);
-	
-	const regionFileName = filePath('region_screenshot.png');
+	const ctx = canvas.getContext("2d");
+	ctx.drawImage(
+		image,
+		region.x,
+		region.y,
+		region.width,
+		region.height,
+		0,
+		0,
+		region.width,
+		region.height,
+	);
+
+	const regionFileName = filePath("region_screenshot.png");
 	const out = fs.createWriteStream(regionFileName);
 	const stream = canvas.createPNGStream();
 	stream.pipe(out);
-	await new Promise(resolve => out.on('finish', resolve));
-	
-	const { data: { words } } = await worker.recognize(regionFileName);
-	
+	await new Promise((resolve) => out.on("finish", resolve));
+
+	const {
+		data: { words },
+	} = await worker.recognize(regionFileName);
+
 	// 記録用画像
-	ctx.font = '20px Arial';
-	ctx.fillStyle = 'red';
+	ctx.font = "20px Arial";
+	ctx.fillStyle = "red";
 	words.forEach((word) => {
 		const { x0, y0, x1, y1 } = word.bbox;
 		ctx.fillText(word.text, x0, y0 - 10);
-		ctx.strokeStyle = 'red';
+		ctx.strokeStyle = "red";
 		ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
 	});
-	const output = fs.createWriteStream(filePath('annotated_region_screenshot.png'));
+	const output = fs.createWriteStream(
+		filePath("annotated_region_screenshot.png"),
+	);
 	const annotatedStream = canvas.createPNGStream();
 	annotatedStream.pipe(output);
-	output.on('finish', () => console.log(''));
-	
+	output.on("finish", () => console.log(""));
 
 	const typingWord = words.filter((word) => {
 		return word.text.match(/\b[a-z!?]{4,}\b/);
-	})
+	});
 
 	/**
 	 * FIXME: "j"の認識が"Jj"になってしまうなどの問題がある。
@@ -120,17 +133,16 @@ setInterval(async () => {
 	if (typingWord.length === 0) {
 		console.log("No matching words found.");
 		console.log(words.map((word) => word.text));
-		return
+		return;
 	}
 
-	const typingWords = typingWord[0].text.split('');
+	const typingWords = typingWord[0].text.split("");
 	console.log(typingWords.join(""));
-	for(let i = 0; i < typingWords.length; i++) {
-		setTimeout(async () => await page.keyboard.press(typingWords[i]), 100)
+	for (let i = 0; i < typingWords.length; i++) {
+		setTimeout(async () => await page.keyboard.press(typingWords[i]), 100);
 	}
 	count++;
 }, 1000);
-
 
 // await worker.terminate();
 // await browser.close();

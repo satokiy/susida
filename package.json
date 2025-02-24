@@ -1,0 +1,24 @@
+{
+	"name": "susida",
+	"module": "index.ts",
+	"type": "module",
+	"devDependencies": {
+		"@biomejs/biome": "1.9.0",
+		"@playwright/test": "^1.47.1",
+		"@types/bun": "latest",
+		"@types/node": "^22.5.5"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	},
+	"dependencies": {
+		"canvas": "^3.1.0",
+		"tesseract.js": "^5.1.1"
+	},
+	"scripts": {
+		"start": "bun run index.ts",
+		"rec": "npx playwright codegen https://sushida.net/play.html?soundless",
+		"check": "biome check --write .",
+		"fmt": "biome format --write ."
+	}
+}
